@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .finance-wrapper {
+        background: linear-gradient(145deg, #f0f4ff 0%, #faf0ff 100%);
+        border-radius: 28px;
+        padding: 1.5rem;
+    }
+    .section-title {
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px;
+        text-transform: uppercase; color: #a0aec0;
+        margin: 0 0 0.8rem 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #e2e8f0, transparent); }
+
+    .glass-card, .chart-box {
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 20px;
+        padding: 1.2rem 1.4rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    .glass-card:hover, .chart-box:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.10); }
+    .chart-box h6 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.6rem; }
+
+    .metric-card {
+        border-radius: 20px; padding: 1.1rem 1.3rem; color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        transition: all 0.35s ease; height: 100%; position: relative; overflow: hidden;
+    }
+    .metric-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.14); }
+    .metric-card h5 { font-weight: 500; opacity: 0.9; font-size: 0.72rem; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 0.15rem; }
+    .metric-card h2 { font-weight: 800; font-size: 1.75rem; margin: 0.15rem 0; }
+    .metric-card small { opacity: 0.8; font-size: 0.72rem; }
+    .metric-card .card-icon { font-size: 2rem; opacity: 0.45; }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;
+        border-radius: 50px; padding: 0.6rem 1.4rem; font-weight: 600; width: 100%;
+        box-shadow: 0 4px 14px rgba(102,126,234,0.3); transition: all 0.3s;
+    }
+    .btn-gradient:hover { transform: scale(1.02); color: white; box-shadow: 0 8px 24px rgba(102,126,234,0.4); }
+    .form-control, .form-select { border-radius: 12px; }
+    .tx-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tx-table td { vertical-align: middle; font-size: 0.88rem; }
+    .icon-btn { border: none; background: transparent; padding: 0.2rem 0.45rem; border-radius: 8px; }
+    .icon-btn:hover { background: rgba(102,126,234,0.12); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+<div class="finance-wrapper">
+
+    <h4 class="fw-bold mb-3"><i class="fas fa-coins text-primary me-2"></i>Financial Overview</h4>
+
+    <!-- ===== METRICS ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color:#1a202c;">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Total Income</h5><h2>₹{{ metrics.income|round(0)|int }}</h2><small>All transactions</small></div>
+                    <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Total Expenses</h5><h2>₹{{ metrics.expenses|round(0)|int }}</h2><small>All transactions</small></div>
+                    <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Net Savings</h5><h2>₹{{ metrics.net|round(0)|int }}</h2><small>Income − Expenses</small></div>
+                    <div class="card-icon"><i class="fas fa-piggy-bank"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Savings Rate</h5><h2>{{ metrics.rate|round(1) }}%</h2><small>Of total income</small></div>
+                    <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FORM + CHARTS ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="glass-card">
+                <h6 class="fw-bold mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Add Transaction</h6>
+                <form method="POST" action="{{ url_for('user_financial') }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Date</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Type</label>
+                        <select name="type" class="form-select" required>
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Category</label>
+                        <select name="category" class="form-select" required>
+                            {% for c in ['Salary','Food','Transport','Education','Shopping','Rent','Health','Entertainment','Other'] %}
+                            <option>{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Amount (₹)</label>
+                        <input type="number" name="amount" min="0.01" step="0.01" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-gradient"><i class="fas fa-save me-1"></i> Save Transaction</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-box">
+                <h6><i class="fas fa-pie-chart text-warning me-1"></i> Expenses by Category</h6>
+                {% if categories %}
+                    <canvas id="categoryChart"></canvas>
+                {% else %}
+                    <p class="text-muted text-center mt-4 small">No expenses recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-box">
+                <h6><i class="fas fa-robot text-primary me-1"></i> Expense Forecast (next 6)</h6>
+                {% if forecast %}
+                    <canvas id="forecastChart"></canvas>
+                    <small class="text-muted">AI-based linear projection of your spending.</small>
+                {% else %}
+                    <p class="text-muted text-center mt-4 small">Add expenses to see a forecast.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RECENT TRANSACTIONS ===== -->
+    <div class="section-title"><i class="fas fa-clock-rotate-left"></i> Recent Transactions</div>
+    <div class="activity-card glass-card" style="padding:0.5rem 1rem;">
+        <div class="table-responsive">
+            <table class="table tx-table align-middle mb-0">
+                <thead>
+                    <tr><th>Date</th><th>Type</th><th>Category</th><th class="text-end">Amount</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                {% for tx in transactions %}
+                    <tr>
+                        <td>{{ tx.date.strftime('%d %b %Y') }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if tx.type == 'income' else 'danger' }}">{{ tx.type|capitalize }}</span>
+                        </td>
+                        <td>{{ tx.category }}</td>
+                        <td class="text-end fw-semibold">{{ '+' if tx.type == 'income' else '-' }}₹{{ '%.2f'|format(tx.amount) }}</td>
+                        <td class="text-end">
+                            <button type="button" class="icon-btn text-primary edit-btn"
+                                    data-bs-toggle="modal" data-bs-target="#editModal"
+                                    data-id="{{ tx.id }}"
+                                    data-date="{{ tx.date.strftime('%Y-%m-%d') }}"
+                                    data-category="{{ tx.category }}"
+                                    data-amount="{{ tx.amount }}"
+                                    data-type="{{ tx.type }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('delete_transaction', id=tx.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete this transaction?');">
+                                <button type="submit" class="icon-btn text-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">No transactions yet. Add your first one above.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:20px; border:none;">
+            <form method="POST" action="{{ url_for('edit_transaction') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-pen text-primary me-2"></i>Edit Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="edit-id">
+                    <div class="mb-2"><label class="form-label small fw-semibold">Date</label>
+                        <input type="date" name="date" id="edit-date" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Type</label>
+                        <select name="type" id="edit-type" class="form-select" required>
+                            <option value="expense">Expense</option><option value="income">Income</option>
+                        </select></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Category</label>
+                        <select name="category" id="edit-category" class="form-select" required>
+                            {% for c in ['Salary','Food','Transport','Education','Shopping','Rent','Health','Entertainment','Other'] %}
+                            <option>{{ c }}</option>
+                            {% endfor %}
+                        </select></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Amount (₹)</label>
+                        <input type="number" name="amount" id="edit-amount" min="0.01" step="0.01" class="form-control" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:50px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius:50px;">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fill edit modal
+    document.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.getElementById('edit-id').value = btn.dataset.id;
+            document.getElementById('edit-date').value = btn.dataset.date;
+            document.getElementById('edit-type').value = btn.dataset.type;
+            document.getElementById('edit-category').value = btn.dataset.category;
+            document.getElementById('edit-amount').value = btn.dataset.amount;
+        });
+    });
+
+    {% if categories %}
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ categories|tojson }},
+            datasets: [{
+                data: {{ category_amounts|tojson }},
+                backgroundColor: ['#667eea','#f093fb','#43e97b','#4facfe','#f5576c','#fa709a','#fee140','#764ba2','#38f9d7'],
+                borderWidth: 2, borderColor: '#fff'
+            }]
+        },
+        options: { cutout: '60%', aspectRatio: 1.3,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+    });
+    {% endif %}
+
+    {% if forecast %}
+    new Chart(document.getElementById('forecastChart'), {
+        type: 'line',
+        data: {
+            labels: ['+1','+2','+3','+4','+5','+6'],
+            datasets: [{
+                label: 'Forecast expense (₹)',
+                data: {{ forecast|tojson }},
+                borderColor: '#f5576c', backgroundColor: 'rgba(245,87,108,0.12)',
+                fill: true, tension: 0.35, pointRadius: 3
+            }]
+        },
+        options: { aspectRatio: 1.5, plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } } } }
+    });
+    {% endif %}
+</script>
+{% endblock %}

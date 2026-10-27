@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .study-wrapper {
+        background: linear-gradient(145deg, #f0f4ff 0%, #faf0ff 100%);
+        border-radius: 28px;
+        padding: 1.5rem;
+    }
+    .section-title {
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px;
+        text-transform: uppercase; color: #a0aec0;
+        margin: 0 0 0.8rem 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #e2e8f0, transparent); }
+
+    .glass-card, .chart-box {
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 20px;
+        padding: 1.2rem 1.4rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    .glass-card:hover, .chart-box:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.10); }
+    .chart-box h6 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.6rem; }
+
+    .metric-card {
+        border-radius: 20px; padding: 1.1rem 1.3rem; color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        transition: all 0.35s ease; height: 100%; position: relative; overflow: hidden;
+    }
+    .metric-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.14); }
+    .metric-card h5 { font-weight: 500; opacity: 0.9; font-size: 0.72rem; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 0.15rem; }
+    .metric-card h2 { font-weight: 800; font-size: 1.75rem; margin: 0.15rem 0; }
+    .metric-card small { opacity: 0.8; font-size: 0.72rem; }
+    .metric-card .card-icon { font-size: 2rem; opacity: 0.45; }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;
+        border-radius: 50px; padding: 0.6rem 1.4rem; font-weight: 600; width: 100%;
+        box-shadow: 0 4px 14px rgba(102,126,234,0.3); transition: all 0.3s;
+    }
+    .btn-gradient:hover { transform: scale(1.02); color: white; box-shadow: 0 8px 24px rgba(102,126,234,0.4); }
+    .form-control, .form-select { border-radius: 12px; }
+    .log-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .log-table td { vertical-align: middle; font-size: 0.88rem; }
+    .icon-btn { border: none; background: transparent; padding: 0.2rem 0.45rem; border-radius: 8px; }
+    .icon-btn:hover { background: rgba(102,126,234,0.12); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+<div class="study-wrapper">
+
+    <h4 class="fw-bold mb-3"><i class="fas fa-book-open text-success me-2"></i>Study &amp; Productivity</h4>
+
+    <!-- ===== METRICS ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Total Hours</h5><h2>{{ total_hours|round(1) }}h</h2><small>All time</small></div>
+                    <div class="card-icon"><i class="fas fa-clock"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Avg Productivity</h5><h2>{{ avg_productivity|round(1) }}%</h2><small>Logged sessions</small></div>
+                    <div class="card-icon"><i class="fas fa-bolt"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color:#1a202c;">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Study Streak</h5><h2>{{ study_streak }} days</h2><small>Consecutive (max 7)</small></div>
+                    <div class="card-icon"><i class="fas fa-fire"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="d-flex justify-content-between">
+                    <div><h5>Predicted GPA</h5><h2>{{ gpa.gpa }}</h2><small>Out of 4.0</small></div>
+                    <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FORM + PREDICTION ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="glass-card">
+                <h6 class="fw-bold mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Log Study Session</h6>
+                <form method="POST" action="{{ url_for('user_study') }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Date</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Hours</label>
+                        <input type="number" name="hours" min="0.1" max="24" step="0.1" class="form-control" placeholder="e.g. 2.5" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Subject</label>
+                        <input type="text" name="subject" class="form-control" placeholder="e.g. Machine Learning" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Productivity (0–100)</label>
+                        <input type="number" name="productivity" min="0" max="100" value="75" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-gradient"><i class="fas fa-save me-1"></i> Log Session</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="row g-3 h-100">
+                <div class="col-12">
+                    <div class="glass-card">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-robot text-primary me-2"></i>
+                            <span class="fw-bold">GPA Prediction</span>
+                            <span class="badge bg-primary ms-2">AI</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-4 flex-wrap">
+                            <div>
+                                <div class="display-5 fw-bold" style="color:#667eea;">{{ gpa.gpa }}</div>
+                                <small class="text-muted">Estimated GPA / 4.0</small>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="small text-muted mb-1">Efficiency: {{ gpa.efficiency }}%</div>
+                                <div class="progress" style="height:8px; border-radius:30px;">
+                                    <div class="progress-bar" style="width: {{ gpa.efficiency }}%;"></div>
+                                </div>
+                                <p class="mt-2 mb-0"><i class="fas fa-lightbulb text-warning me-1"></i>{{ gpa.recommendation }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="chart-box">
+                        <h6><i class="fas fa-chart-line text-success me-1"></i> Daily Study Hours</h6>
+                        {% if study_dates %}<canvas id="studyChart"></canvas>
+                        {% else %}<p class="text-muted text-center mt-4 small">No sessions logged yet.</p>{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="chart-box">
+                        <h6><i class="fas fa-pie-chart text-warning me-1"></i> Subjects</h6>
+                        {% if subjects %}<canvas id="subjectChart"></canvas>
+                        {% else %}<p class="text-muted text-center mt-4 small">No subjects yet.</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PRODUCTIVITY CHART ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="chart-box">
+                <h6><i class="fas fa-bolt text-danger me-1"></i> Productivity Trend</h6>
+                {% if prod_dates %}<canvas id="prodChart" style="max-height:180px;"></canvas>
+                {% else %}<p class="text-muted text-center small">Log sessions to see your productivity trend.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RECENT LOGS ===== -->
+    <div class="section-title"><i class="fas fa-clock-rotate-left"></i> Recent Study Logs</div>
+    <div class="glass-card" style="padding:0.5rem 1rem;">
+        <div class="table-responsive">
+            <table class="table log-table align-middle mb-0">
+                <thead>
+                    <tr><th>Date</th><th>Subject</th><th>Hours</th><th>Productivity</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                {% for log in logs %}
+                    <tr>
+                        <td>{{ log.date.strftime('%d %b %Y') }}</td>
+                        <td>{{ log.subject }}</td>
+                        <td>{{ log.hours }}h</td>
+                        <td><span class="badge bg-info">{{ log.productivity_score }}%</span></td>
+                        <td class="text-end">
+                            <button type="button" class="icon-btn text-primary edit-btn"
+                                    data-bs-toggle="modal" data-bs-target="#editModal"
+                                    data-id="{{ log.id }}"
+                                    data-date="{{ log.date.strftime('%Y-%m-%d') }}"
+                                    data-hours="{{ log.hours }}"
+                                    data-subject="{{ log.subject }}"
+                                    data-productivity="{{ log.productivity_score }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('delete_study_log', id=log.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete this study log?');">
+                                <button type="submit" class="icon-btn text-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">No study records yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:20px; border:none;">
+            <form method="POST" action="{{ url_for('edit_study_log') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-pen text-primary me-2"></i>Edit Study Log</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="edit-id">
+                    <div class="mb-2"><label class="form-label small fw-semibold">Date</label>
+                        <input type="date" name="date" id="edit-date" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Hours</label>
+                        <input type="number" name="hours" id="edit-hours" min="0.1" max="24" step="0.1" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Subject</label>
+                        <input type="text" name="subject" id="edit-subject" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label small fw-semibold">Productivity (0–100)</label>
+                        <input type="number" name="productivity" id="edit-productivity" min="0" max="100" class="form-control" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:50px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius:50px;">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.getElementById('edit-id').value = btn.dataset.id;
+            document.getElementById('edit-date').value = btn.dataset.date;
+            document.getElementById('edit-hours').value = btn.dataset.hours;
+            document.getElementById('edit-subject').value = btn.dataset.subject;
+            document.getElementById('edit-productivity').value = btn.dataset.productivity;
+        });
+    });
+
+    {% if study_dates %}
+    new Chart(document.getElementById('studyChart'), {
+        type: 'line',
+        data: {
+            labels: {{ study_dates|tojson }},
+            datasets: [{ label: 'Hours', data: {{ study_hours|tojson }},
+                borderColor: '#43e97b', backgroundColor: 'rgba(67,233,123,0.12)',
+                fill: true, tension: 0.35, pointRadius: 3 }]
+        },
+        options: { aspectRatio: 1.6, plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 8 } } } } }
+    });
+    {% endif %}
+
+    {% if subjects %}
+    new Chart(document.getElementById('subjectChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ subjects|tojson }},
+            datasets: [{ data: {{ subject_hours|tojson }},
+                backgroundColor: ['#667eea','#f093fb','#43e97b','#4facfe','#f5576c','#fa709a','#fee140','#764ba2'],
+                borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: { cutout: '60%', aspectRatio: 1.1,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+    });
+    {% endif %}
+
+    {% if prod_dates %}
+    new Chart(document.getElementById('prodChart'), {
+        type: 'line',
+        data: {
+            labels: {{ prod_dates|tojson }},
+            datasets: [{ label: 'Avg productivity (%)', data: {{ prod_avg|tojson }},
+                borderColor: '#f5576c', backgroundColor: 'rgba(245,87,108,0.1)',
+                fill: true, tension: 0.35, pointRadius: 3 }]
+        },
+        options: { aspectRatio: 3.5, plugins: { legend: { display: false } },
+            scales: { y: { min: 0, max: 100, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 8 } } } } }
+    });
+    {% endif %}
+</script>
+{% endblock %}
